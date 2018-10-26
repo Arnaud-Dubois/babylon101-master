@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset="utf-8"/>
+    <title>Babylon - Getting Started</title>
+    <!--- Link to the last version of BabylonJS -->
+    <script src="https://cdn.babylonjs.com/babylon.js"></script>
+    <style>
+        html, body {
+            overflow: hidden;
+            width   : 100%;
+            height  : 100%;
+            margin  : 0;
+            padding : 0;
+        }
+
+        #renderCanvas {
+            width   : 100%;
+            height  : 100%;
+            touch-action: none;
+        }
+
+        #fpsLabel {
+            position: absolute;
+            right: 20px;
+            top: 20px;
+            color: #999;
+            cursor: default;
+        }
+
+    </style>
+</head>
+<body>
+    
+    <canvas id="renderCanvas"></canvas>
+    <div id="fpsLabel"></> 
+    <script>
+        window.addEventListener('DOMContentLoaded', function(){
+            // get the canvas DOM element
+            var canvas = document.getElementById('renderCanvas');
+
+            // load the 3D engine
+            var engine = new BABYLON.Engine(canvas, true);
+
+            // createScene function that creates and return the scene
+            var createScene = function(){
+                // create a basic BJS Scene object
+                var scene = new BABYLON.Scene(engine);
+
+                // create a FreeCamera, and set its position to (x:0, y:5, z:-10)
+                var camera = new BABYLON.FreeCamera('camera1', new BABYLON.Vector3(25, 5,-10), scene);
+
+                // target the camera to scene origin
+                camera.setTarget(BABYLON.Vector3.Zero());
+
+                // attach the camera to the canvas
+                camera.attachControl(canvas, false);
+
+                // create a basic light, aiming 0,1,0 - meaning, to the sky
+                var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+
+
+                // create a built-in "sphere" shape; its constructor takes 6 params: name, segment, diameter, scene, updatable, sideOrientation 
+                var fountain = BABYLON.Mesh.CreateSphere('sphere1', 16, 2, scene);
+                var myMaterial = new BABYLON.StandardMaterial("myMaterial", scene);
+                myMaterial.diffuseColor = new BABYLON.Color3(0.5, 0.15, 0);
+                myMaterial.specularColor = new BABYLON.Color3(1, 0.25, 0.25);
+
+                scene.clearColor = BABYLON.Color3.Blue();
+                scene.ambientColor = BABYLON.Color3.Red();
+
+                
+                var rng = Math.ceil(Math.random(1) * 10); 
+
+                myMaterial.wireframe = true;
+                fountain.material = myMaterial;
+
+
+                // move the sphere upward 1/2 of its height
+                // fountain.position.y = rng;
+
+                // Fountain object
+                // var fountain = BABYLON.Mesh.CreateBox("fountain", 1.0, scene);
+                // fountain.visibility = false;
+                
+                //fountain._absolutePosition.y = 1050;
+                
+                fountain.setPositionWithLocalVector(new BABYLON.Vector3(rng/2, rng/2, rng/2));
+                //console.log(fountain._absolutePosition.x)
+
+                // Ground
+                var ground = BABYLON.Mesh.CreatePlane("ground", 50.0, scene);
+                ground.position = new BABYLON.Vector3(0, -10, 0);
+                ground.rotation = new BABYLON.Vector3(Math.PI / 2, 0, 0);
+
+                ground.material = new BABYLON.StandardMaterial("groundMat", scene);
+                ground.material.backFaceCulling = true;
+                ground.material.diffuseColor = new BABYLON.Color3(0.3, 0.3, 1);
+
+                // Create a particle system
+                var particleSystem = new BABYLON.ParticleSystem("particles",500, scene);
+
+                // Texture of each particle
+                particleSystem.particleTexture = new BABYLON.Texture("textures/flare.png", scene);
+
+                
+                
+
+                // Particles source
+                particleSystem.emitter = fountain;
+                particleSystem.minEmitBox = new BABYLON.Vector3(-rng, rng, rng); // Starting all from
+                particleSystem.maxEmitBox = new BABYLON.Vector3(rng, rng, rng); // To...
+
+                
+                // Colors of all particles
+                particleSystem.color1 = new BABYLON.Color4(0.7, 0.8, 1.0, 1.0);
+                particleSystem.color2 = new BABYLON.Color4(0.2, 0.5, 1.0, 1.0);
+                particleSystem.colorDead = new BABYLON.Color4(0.2, 0.5, 1.0, 0.0);
+
+                // Size of each particle (random between...
+                particleSystem.minSize = 0.1;
+                particleSystem.maxSize = 0.5;
+
+                // Life time of each particle (random between...
+                particleSystem.minLifeTime = 0.3;
+                particleSystem.maxLifeTime = 1.5;
+
+                // Emission rate
+                particleSystem.emitRate = 1500;
+
+                // Blend mode : BLENDMODE_ONEONE, or BLENDMODE_STANDARD
+                particleSystem.blendMode = BABYLON.ParticleSystem.BLENDMODE_ONEONE;
+
+                // Set the gravity of all particles
+                particleSystem.gravity = new BABYLON.Vector3(0, -9.81, 0);
+
+                // Direction of each particle after it has been emitted
+                particleSystem.direction1 = new BABYLON.Vector3(-7, 8, 3);
+                particleSystem.direction2 = new BABYLON.Vector3(7, 8, -3);
+
+                // Angular speed, in radians
+                particleSystem.minAngularSpeed = 0;
+                particleSystem.maxAngularSpeed = Math.PI;
+
+                // Speed
+                particleSystem.minEmitPower = 1;
+                particleSystem.maxEmitPower = 3;
+                particleSystem.updateSpeed = 0.005;
+
+                // Start the particle system
+                particleSystem.start();
+
+
+
+                // Fountain's animation
+                var keys = [];
+                var animation = new BABYLON.Animation("animation", "rotation.x", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT,
+                                                                    BABYLON.Animation.ANIMATIONLOOPMODE_CYCLE);
+                
+                // At the animation key 0, the value of scaling is "1"
+                keys.push({
+                    frame: 0,
+                    value: 0
+                });
+
+                // At the animation key 50, the value of scaling is "0.2"
+                keys.push({
+                    frame: 50,
+                    value: 8
+                });
+
+                // At the animation key 100, the value of scaling is "1"
+                keys.push({
+                    frame: 100,
+                    value: 0
+                });
+
+                // Launch animation
+                animation.setKeys(keys);
+                fountain.animations.push(animation);
+                scene.beginAnimation(fountain, 0, 100, true);
+
+                
+                
+                // create a built-in "ground" shape;
+                // var ground = BABYLON.Mesh.CreateGround('ground1', 16, 16, 2, scene);
+
+                // return the created scene
+
+                var a = 0; // for oscillation
+                scene.registerBeforeRender(function () {
+                    a +=0.005;
+                    var sign = Math.cos(a)/Math.abs(Math.cos(a));
+                    fountain.rotation.x += 0.01 * sign;
+                    fountain.rotation.y += 0.01 * sign;
+                });
+
+                var skybox = BABYLON.Mesh.CreateBox("skyBox", 100.0, scene);
+                var skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
+                skyboxMaterial.backFaceCulling = false;
+                skyboxMaterial.disableLighting = true;
+                skybox.material = skyboxMaterial;
+                skybox.infiniteDistance = true;
+                skyboxMaterial.disableLighting = true;
+
+                skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("/textures/SpecularHDR.dds", scene);
+                skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+/*
+                var hdrTexture = new BABYLON.CubeTexture("/textures/SpecularHDR.dds", scene);
+                scene.createDefaultSkybox(hdrTexture, true, 10000);*/
+
+                return scene;
+            }
+
+            // call the createScene function
+            var scene = createScene();
+
+            // run the render loop
+            engine.runRenderLoop(function(){
+                scene.render();
+                var fpsLabel = document.getElementById("fpsLabel");
+                fpsLabel.innerHTML = engine.getFps().toFixed() + " fps";
+            });
+
+            // the canvas/window resize event handler
+            window.addEventListener('resize', function(){
+                engine.resize();
+            });
+        });
+    </script>
+</body>
+</html>
